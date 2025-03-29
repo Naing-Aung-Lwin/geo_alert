@@ -17,6 +17,7 @@ interface LatLng {
 const App: React.FC = () => {
   const [destination, setDestination] = useState<LatLng | null>(null);
   const [userLocation, setUserLocation] = useState<LatLng | null>(null);
+  const [mapMarkers,  setMapMarkers] = useState<any[]>([]);
 
   // Request location permissions
   const requestPermissions = async () => {
@@ -53,7 +54,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!destination || !userLocation) {
+    if (!destination) {
       return;
     }
     // Track user location
@@ -61,6 +62,7 @@ const App: React.FC = () => {
       (position: any) => {
         const {latitude, longitude} = position.coords;
         setUserLocation({lat: latitude, lng: longitude});
+        console.log('userlocations >> ', userLocation);
         if (destination) {
           const distance = getDistance(
             latitude,
@@ -85,41 +87,60 @@ const App: React.FC = () => {
     };
   }, [destination, userLocation]);
 
-  const handleMapEvents = (event: any) => {
-    if (event.type === 'onMapClicked') {
-      setDestination({
-        lat: event?.payload?.touchLatLng?.lat || 0,
-        lng: event?.payload?.touchLatLng?.lng || 0,
-      });
-    }
-  };
+  // useEffect(() => {
+  //   if (userLocation) {
+  //     setMapMarkers([
+  //       ...mapMarkers,
+  //       {
+  //         position: userLocation,
+  //         icon: '🧍',
+  //         size: [32, 32],
+  //         id: 'user_location',
+  //       },
+  //     ]);
+  //   }
+  //   if (destination) {
+  //     setMapMarkers([
+  //       ...mapMarkers,
+  //       {
+  //         position: destination,
+  //         icon: '📍',
+  //         size: [32, 32],
+  //         id: 'destination',
+  //       },
+  //     ]);
+  //   }
+  //   console.log('mapMarkers >>> ', mapMarkers);
+  // }, [destination, mapMarkers, userLocation]);
 
-  const getMapMarkers = () => {
-    let mapMarkers: any[] = [];
-    if (userLocation) {
-      mapMarkers = [
-        ...mapMarkers,
-        {
-          position: userLocation,
-          icon: '🧍',
-          size: [32, 32],
-          id: 'user_location',
-        },
-      ];
-    }
-    if (destination) {
-      mapMarkers = [
-        ...mapMarkers,
-        {
-          position: destination,
+  const handleMapEvents = (event: any) => {
+    console.log('event >>> ', event);
+    if (event.event === 'onMapClicked') {
+      setDestination({
+        lat: event?.payload?.touchLatLng?.lat,
+        lng: event?.payload?.touchLatLng?.lng,
+      });
+      const currentMarkers = [...mapMarkers];
+      console.log('currentMarkers', currentMarkers);
+      const index = mapMarkers.findIndex(marker => marker.id === 'destination');
+      console.log('index >>> ', index);
+      if (index !== -1) {
+        currentMarkers[index].position.lat = event?.payload?.touchLatLng?.lat;
+        currentMarkers[index].position.lng = event?.payload?.touchLatLng?.lng;
+        setMapMarkers(currentMarkers);
+      } else if (mapMarkers.length === 0) {
+        currentMarkers.push({
+          id: 'destination',
+          position: {
+            lat: event?.payload?.touchLatLng?.lat,
+            lng: event?.payload?.touchLatLng?.lng,
+          },
           icon: '📍',
           size: [32, 32],
-          id: 'destination',
-        },
-      ];
+        });
+        setMapMarkers(currentMarkers);
+      }
     }
-    console.log('mapMarkers', mapMarkers);
-    return mapMarkers;
   };
 
   return (
@@ -127,7 +148,7 @@ const App: React.FC = () => {
       <LeafletView
         mapCenterPosition={userLocation || {lat: 48.8566, lng: 2.3522}}
         zoom={15}
-        mapMarkers={getMapMarkers()}
+        mapMarkers={mapMarkers}
         onMessageReceived={handleMapEvents}
         mapLayers={[
           {
