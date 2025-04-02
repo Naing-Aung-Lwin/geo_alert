@@ -1,3 +1,11 @@
+/**
+ * Calculates the distance between two points on the Earth's surface using the Haversine formula.
+ * @param lat1 Latitude of the first point
+ * @param lon1 Longitude of the first point
+ * @param lat2 Latitude of the second point
+ * @param lon2 Longitude of the second point
+ * @returns Distance in meters
+ */
 export const getDistance = (
   lat1: number,
   lon1: number,

@@ -1,15 +1,29 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Text, Alert} from 'react-native';
 import {LeafletView, WebviewLeafletMessage} from 'react-native-leaflet-view';
 import useLocation from '../../hooks/useLocation';
 import useDestination from '../../hooks/useDestination';
 import {getDistance} from '../../utils/distance';
 import {DESTINATION_REACHED, DESTINATION_REACHED_MSG} from '../../constants';
+import NotificationSounds, {
+  playSampleSound,
+  stopSampleSound,
+} from 'react-native-notification-sounds';
 
 const LocationTracker: React.FC = () => {
   const {userLocation, requestLocationPermission} = useLocation();
-  const {destination, setDestination, mapMarkers} =
+  const {destination, setDestination, mapMarkers, clearDestination} =
     useDestination(userLocation);
+  const [notificationSound, setNotificationSound] = useState<any>(null);
+
+  // Load a default notification sound when component mounts
+  useEffect(() => {
+    NotificationSounds.getNotifications('ringtone').then(sounds => {
+      if (sounds && sounds.length > 0) {
+        setNotificationSound(sounds[0]);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     requestLocationPermission();
@@ -29,9 +43,21 @@ const LocationTracker: React.FC = () => {
     );
 
     if (distance < 200) {
-      Alert.alert(DESTINATION_REACHED, DESTINATION_REACHED_MSG);
+      if (notificationSound) {
+        playSampleSound(notificationSound);
+      }
+
+      Alert.alert(DESTINATION_REACHED, DESTINATION_REACHED_MSG, [
+        {
+          text: 'OK',
+          onPress: () => {
+            stopSampleSound();
+            clearDestination();
+          },
+        },
+      ]);
     }
-  }, [destination, userLocation]);
+  }, [destination, userLocation, notificationSound, clearDestination]);
 
   const handleMapEvents = (event: WebviewLeafletMessage) => {
     if (event.event === 'onMapClicked') {

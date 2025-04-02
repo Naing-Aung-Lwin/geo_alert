@@ -12,6 +12,9 @@ import {
 const useLocation = () => {
   const [userLocation, setUserLocation] = useState<LatLng | null>(null);
 
+  /**
+   * Requests location permission and retrieves the current location
+   */
   const requestLocationPermission = async () => {
     if (Platform.OS === 'android') {
       try {
@@ -32,6 +35,9 @@ const useLocation = () => {
     }
   };
 
+  /**
+   * Retrieves the current location
+   */
   const getCurrentLocation = () => {
     Geolocation.getCurrentPosition(
       position => {
@@ -43,6 +49,9 @@ const useLocation = () => {
     );
   };
 
+  /**
+   * Watches for real-time location updates
+   */
   useEffect(() => {
     const watchId = Geolocation.watchPosition(
       position => {
