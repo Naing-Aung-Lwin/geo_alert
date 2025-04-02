@@ -1,18 +1,19 @@
 import React, {useEffect} from 'react';
 import {Text, Alert} from 'react-native';
-import {LeafletView} from 'react-native-leaflet-view';
+import {LeafletView, WebviewLeafletMessage} from 'react-native-leaflet-view';
 import useLocation from '../../hooks/useLocation';
 import useDestination from '../../hooks/useDestination';
-import { getDistance } from '../../utils/distance';
+import {getDistance} from '../../utils/distance';
+import {DESTINATION_REACHED, DESTINATION_REACHED_MSG} from '../../constants';
 
 const LocationTracker: React.FC = () => {
   const {userLocation, requestLocationPermission} = useLocation();
-  const {destination, setDestination, mapMarkers, setMarker} =
+  const {destination, setDestination, mapMarkers} =
     useDestination(userLocation);
 
   useEffect(() => {
     requestLocationPermission();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -28,19 +29,15 @@ const LocationTracker: React.FC = () => {
     );
 
     if (distance < 200) {
-      Alert.alert(
-        'Destination Reached!',
-        'You have arrived at your marked location.',
-      );
+      Alert.alert(DESTINATION_REACHED, DESTINATION_REACHED_MSG);
     }
   }, [destination, userLocation]);
 
-  const handleMapEvents = (event: any) => {
+  const handleMapEvents = (event: WebviewLeafletMessage) => {
     if (event.event === 'onMapClicked') {
       const lat = event?.payload?.touchLatLng?.lat;
       const lng = event?.payload?.touchLatLng?.lng;
       setDestination({lat, lng});
-      setMarker(lat, lng, 'destination', '📍');
     }
   };
 

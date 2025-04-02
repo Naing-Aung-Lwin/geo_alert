@@ -2,6 +2,12 @@ import {useState, useEffect} from 'react';
 import {Platform, PermissionsAndroid, Alert} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import {LatLng} from '../types';
+import {
+  ERROR_GET_LOCATION,
+  ERROR_GET_REAL_TIME_LOCATION,
+  USER_LOCATION_DENIED,
+  USER_LOCATION_REQUEST_MSG,
+} from '../constants';
 
 const useLocation = () => {
   const [userLocation, setUserLocation] = useState<LatLng | null>(null);
@@ -11,18 +17,12 @@ const useLocation = () => {
       try {
         const granted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-          {
-            title: 'Location Access Required',
-            message: 'This app needs to access your location.',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'OK',
-          },
+          USER_LOCATION_REQUEST_MSG,
         );
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
           getCurrentLocation();
         } else {
-          Alert.alert('Location permission denied');
+          Alert.alert(USER_LOCATION_DENIED);
         }
       } catch (err) {
         console.error(err);
@@ -38,7 +38,7 @@ const useLocation = () => {
         const {latitude, longitude} = position.coords;
         setUserLocation({lat: latitude, lng: longitude});
       },
-      error => console.error('Error getting location:', error),
+      error => console.error(ERROR_GET_LOCATION, error),
       {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
     );
   };
@@ -49,7 +49,7 @@ const useLocation = () => {
         const {latitude, longitude} = position.coords;
         setUserLocation({lat: latitude, lng: longitude});
       },
-      error => console.error('Geolocation Error:', error),
+      error => console.error(ERROR_GET_REAL_TIME_LOCATION, error),
       {
         enableHighAccuracy: true,
         distanceFilter: 1,

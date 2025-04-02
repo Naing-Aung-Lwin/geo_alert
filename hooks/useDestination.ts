@@ -1,5 +1,11 @@
 import {useState, useEffect} from 'react';
 import {LatLng} from '../types';
+import {
+  USER_DESTINATION,
+  USER_DESTINATION_ICON,
+  USER_LOCATION,
+  USER_LOCATION_ICON,
+} from '../constants';
 
 interface MapMarker {
   id: string;
@@ -15,9 +21,14 @@ const useDestination = (userLocation: LatLng | null) => {
   // Update user location marker whenever userLocation changes
   useEffect(() => {
     if (userLocation) {
-      setMarker(userLocation.lat, userLocation.lng, 'userLocation', '🚗');
+      setMarker(
+        userLocation.lat,
+        userLocation.lng,
+        USER_LOCATION,
+        USER_LOCATION_ICON,
+      );
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLocation]);
 
   /**
@@ -70,7 +81,12 @@ const useDestination = (userLocation: LatLng | null) => {
    */
   const setNewDestination = (newDestination: LatLng) => {
     setDestination(newDestination);
-    setMarker(newDestination.lat, newDestination.lng, 'destination', '📍');
+    setMarker(
+      newDestination.lat,
+      newDestination.lng,
+      USER_DESTINATION,
+      USER_DESTINATION_ICON,
+    );
   };
 
   /**
@@ -78,7 +94,7 @@ const useDestination = (userLocation: LatLng | null) => {
    */
   const clearDestination = () => {
     setDestination(null);
-    removeMarker('destination');
+    removeMarker(USER_DESTINATION);
   };
 
   return {
