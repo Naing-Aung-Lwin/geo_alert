@@ -1,33 +1,34 @@
-import React, {useEffect, useState} from 'react';
-import {Text, Alert, View, TouchableOpacity, Image} from 'react-native';
+import React, {useEffect, useState, useRef} from 'react';
+import {Text, View, TouchableOpacity, Image} from 'react-native';
 import {LeafletView, WebviewLeafletMessage} from 'react-native-leaflet-view';
 import useLocation from '../../hooks/useLocation';
 import useDestination from '../../hooks/useDestination';
+import useNotification from '../../hooks/useNotification';
 import {getDistance} from '../../utils/distance';
 import {DESTINATION_REACHED, DESTINATION_REACHED_MSG} from '../../constants';
-import NotificationSounds, {
-  playSampleSound,
-  stopSampleSound,
-} from 'react-native-notification-sounds';
 import {styles} from './styles';
 
 const LocationTracker: React.FC = () => {
   const {userLocation, requestLocationPermission} = useLocation();
   const {destination, setDestination, mapMarkers, clearDestination} =
     useDestination(userLocation);
-  const [notificationSound, setNotificationSound] = useState<any>(null);
+  const {
+    requestPermission,
+    createChannel,
+    displayNotification,
+    registerNotificationListener,
+  } = useNotification();
+
   const [mapCenter, setMapCenter] = useState<{lat: number; lng: number} | null>(
     null,
   );
+  // Track if notification has been shown
+  const destinationReachedRef = useRef(false);
 
-  // Load a default notification sound when component mounts
+  // Request notification permission when component mounts
   useEffect(() => {
-    NotificationSounds.getNotifications('ringtone').then(sounds => {
-      if (sounds && sounds.length > 0) {
-        setNotificationSound(sounds[0]);
-      }
-    });
-  }, []);
+    requestPermission();
+  }, [requestPermission]);
 
   useEffect(() => {
     requestLocationPermission();
@@ -41,6 +42,13 @@ const LocationTracker: React.FC = () => {
     }
   }, [userLocation, mapCenter]);
 
+  // Reset the notification flag when destination changes
+  useEffect(() => {
+    if (destination) {
+      destinationReachedRef.current = false;
+    }
+  }, [destination]);
+
   useEffect(() => {
     if (!destination || !userLocation) {
       return;
@@ -53,22 +61,51 @@ const LocationTracker: React.FC = () => {
       destination.lng,
     );
 
-    if (distance < 200) {
-      if (notificationSound) {
-        playSampleSound(notificationSound);
-      }
+    // Only show notification if we haven't already shown it for this destination
+    if (distance < 200 && !destinationReachedRef.current) {
+      destinationReachedRef.current = true;
 
-      Alert.alert(DESTINATION_REACHED, DESTINATION_REACHED_MSG, [
-        {
-          text: 'OK',
-          onPress: () => {
-            stopSampleSound();
-            clearDestination();
-          },
-        },
-      ]);
+      // Function to display notification when destination is reached
+      const displayDestinationReachedNotification = async () => {
+        try {
+          // Create a channel for destination alerts
+          const channelId = await createChannel(
+            'destination_reached',
+            'Destination Alerts',
+          );
+
+          // Display the notification with an OK action
+          await displayNotification(
+            channelId,
+            DESTINATION_REACHED,
+            DESTINATION_REACHED_MSG,
+            [{title: 'OK', id: 'stop'}],
+            'destination-reached-notification',
+          );
+
+          // Set up event listener for notification actions
+          registerNotificationListener((type, detail) => {
+            if (detail.pressAction?.id === 'stop' || detail.pressAction?.id === 'default') {
+              clearDestination();
+              destinationReachedRef.current = false;
+            }
+          });
+        } catch (error) {
+          console.error('Error displaying notification:', error);
+        }
+      };
+
+      // Display notification
+      displayDestinationReachedNotification();
     }
-  }, [destination, userLocation, notificationSound, clearDestination]);
+  }, [
+    destination,
+    userLocation,
+    displayNotification,
+    createChannel,
+    registerNotificationListener,
+    clearDestination,
+  ]);
 
   const handleMapEvents = (event: WebviewLeafletMessage) => {
     if (event.event === 'onMapClicked') {
