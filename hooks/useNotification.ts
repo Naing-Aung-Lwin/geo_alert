@@ -61,7 +61,6 @@ const useNotification = () => {
     ) => {
       const permissionGranted = await hasPermission();
       if (!permissionGranted) {
-        console.log('Notification permission denied');
         return null;
       }
       await notifee.cancelAllNotifications();

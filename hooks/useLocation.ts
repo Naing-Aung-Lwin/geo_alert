@@ -2,9 +2,12 @@ import {useState, useEffect} from 'react';
 import {Platform, PermissionsAndroid, Alert} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import BackgroundTimer from 'react-native-background-timer';
-import { LatLng } from 'react-native-leaflet-view';
+import {LatLng} from 'react-native-leaflet-view';
 import {
+  BACKGROUND_REQUEST_MSG,
   ERROR_GET_REAL_TIME_LOCATION,
+  LIMITED_FUNCTIONALITY_MSG,
+  LIMITED_FUNCTIONALITY_MSG_BODY,
   USER_LOCATION_DENIED,
   USER_LOCATION_REQUEST_MSG,
 } from '../constants';
@@ -26,12 +29,44 @@ const useLocation = () => {
         );
         if (granted === PermissionsAndroid.RESULTS.GRANTED) {
           setLocationPermissionGranted(true);
+          requestBackgroundLocationPermission();
         } else {
           Alert.alert(USER_LOCATION_DENIED);
         }
       } catch (err) {
         console.error(err);
       }
+    } else {
+      // IOS is still in development
+    }
+  };
+
+  /**
+   * Requests background location permission
+   */
+  const requestBackgroundLocationPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        // For Android 10+ (API 29+), request background permission separately
+        const version = String(Platform.Version);
+        if (parseInt(version, 10) >= 29) {
+          const backgroundGranted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION,
+            BACKGROUND_REQUEST_MSG,
+          );
+
+          if (backgroundGranted !== PermissionsAndroid.RESULTS.GRANTED) {
+            Alert.alert(
+              LIMITED_FUNCTIONALITY_MSG,
+              LIMITED_FUNCTIONALITY_MSG_BODY,
+            );
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      // iOS implementation
     }
   };
 
@@ -69,7 +104,6 @@ const useLocation = () => {
     getCurrentLocation();
 
     const intervalId = BackgroundTimer.setInterval(() => {
-      console.log('Fetching location...');
       getCurrentLocation();
     }, 5000);
 

@@ -5,7 +5,11 @@ import useLocation from '../../hooks/useLocation';
 import useDestination from '../../hooks/useDestination';
 import useNotification from '../../hooks/useNotification';
 import {getDistance} from '../../utils/distance';
-import {DESTINATION_REACHED, DESTINATION_REACHED_MSG, MAX_DISTANCE_THRESHOLD} from '../../constants';
+import {
+  DESTINATION_REACHED,
+  DESTINATION_REACHED_MSG,
+  MAX_DISTANCE_THRESHOLD,
+} from '../../constants';
 import {styles} from './styles';
 
 const LocationTracker: React.FC = () => {
@@ -24,9 +28,14 @@ const LocationTracker: React.FC = () => {
   );
   const destinationReachedRef = useRef(false);
 
+  // Option 2: Use async/await to ensure sequential execution
   useEffect(() => {
-    requestPermission();
-    requestLocationPermission();
+    const requestPermissions = async () => {
+      await requestPermission();
+      await requestLocationPermission();
+    };
+
+    requestPermissions();
   }, [requestLocationPermission, requestPermission]);
 
   useEffect(() => {
@@ -72,7 +81,10 @@ const LocationTracker: React.FC = () => {
           );
 
           registerNotificationListener((_type, detail) => {
-            if (detail.pressAction?.id === 'stop' || detail.pressAction?.id === 'default') {
+            if (
+              detail.pressAction?.id === 'stop' ||
+              detail.pressAction?.id === 'default'
+            ) {
               clearDestination();
               destinationReachedRef.current = false;
             }
