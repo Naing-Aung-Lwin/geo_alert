@@ -36,8 +36,8 @@ const useNotification = () => {
       return await notifee.createChannel({
         id: channelId,
         name: channelName,
-        importance: 4, // High importance
-        sound: 'none', // No sound
+        importance: 4,
+        sound: 'none',
       });
     },
     [],
@@ -59,14 +59,11 @@ const useNotification = () => {
       actions: Array<{title: string; id: string}> = [],
       notificationId?: string,
     ) => {
-      // Check permissions first
       const permissionGranted = await hasPermission();
       if (!permissionGranted) {
         console.log('Notification permission denied');
         return null;
       }
-
-      // Clear any existing notifications first
       await notifee.cancelAllNotifications();
 
       const androidActions = actions.map(action => ({
@@ -87,7 +84,7 @@ const useNotification = () => {
             id: 'default',
           },
           actions: androidActions,
-          sound: 'none', // Explicitly set no sound
+          sound: 'none',
         },
       });
     },

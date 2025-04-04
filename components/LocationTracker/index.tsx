@@ -5,7 +5,7 @@ import useLocation from '../../hooks/useLocation';
 import useDestination from '../../hooks/useDestination';
 import useNotification from '../../hooks/useNotification';
 import {getDistance} from '../../utils/distance';
-import {DESTINATION_REACHED, DESTINATION_REACHED_MSG} from '../../constants';
+import {DESTINATION_REACHED, DESTINATION_REACHED_MSG, MAX_DISTANCE_THRESHOLD} from '../../constants';
 import {styles} from './styles';
 
 const LocationTracker: React.FC = () => {
@@ -22,27 +22,19 @@ const LocationTracker: React.FC = () => {
   const [mapCenter, setMapCenter] = useState<{lat: number; lng: number} | null>(
     null,
   );
-  // Track if notification has been shown
   const destinationReachedRef = useRef(false);
 
-  // Request notification permission when component mounts
   useEffect(() => {
     requestPermission();
-  }, [requestPermission]);
-
-  useEffect(() => {
     requestLocationPermission();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [requestLocationPermission, requestPermission]);
 
-  // Set initial map center to user location only once
   useEffect(() => {
     if (userLocation && !mapCenter) {
       setMapCenter(userLocation);
     }
   }, [userLocation, mapCenter]);
 
-  // Reset the notification flag when destination changes
   useEffect(() => {
     if (destination) {
       destinationReachedRef.current = false;
@@ -61,20 +53,16 @@ const LocationTracker: React.FC = () => {
       destination.lng,
     );
 
-    // Only show notification if we haven't already shown it for this destination
-    if (distance < 200 && !destinationReachedRef.current) {
+    if (distance < MAX_DISTANCE_THRESHOLD && !destinationReachedRef.current) {
       destinationReachedRef.current = true;
 
-      // Function to display notification when destination is reached
       const displayDestinationReachedNotification = async () => {
         try {
-          // Create a channel for destination alerts
           const channelId = await createChannel(
             'destination_reached',
             'Destination Alerts',
           );
 
-          // Display the notification with an OK action
           await displayNotification(
             channelId,
             DESTINATION_REACHED,
@@ -83,19 +71,16 @@ const LocationTracker: React.FC = () => {
             'destination-reached-notification',
           );
 
-          // Set up event listener for notification actions
-          registerNotificationListener((type, detail) => {
+          registerNotificationListener((_type, detail) => {
             if (detail.pressAction?.id === 'stop' || detail.pressAction?.id === 'default') {
               clearDestination();
               destinationReachedRef.current = false;
             }
           });
         } catch (error) {
-          console.error('Error displaying notification:', error);
+          console.error(error);
         }
       };
-
-      // Display notification
       displayDestinationReachedNotification();
     }
   }, [
@@ -112,14 +97,12 @@ const LocationTracker: React.FC = () => {
       const lat = event?.payload?.touchLatLng?.lat;
       const lng = event?.payload?.touchLatLng?.lng;
       setDestination({lat, lng});
-      // Update map center to the clicked location
       setMapCenter({lat, lng});
     }
   };
 
   const centerOnUserLocation = () => {
     if (userLocation) {
-      // Force update by creating a new object reference
       setMapCenter({...userLocation});
     }
   };

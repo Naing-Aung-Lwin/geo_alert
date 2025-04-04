@@ -15,3 +15,4 @@ export const USER_LOCATION_REQUEST_MSG = {
 };
 export const ERROR_GET_LOCATION = 'Error getting location';
 export const ERROR_GET_REAL_TIME_LOCATION = 'Error getting real time location';
+export const MAX_DISTANCE_THRESHOLD = 300;

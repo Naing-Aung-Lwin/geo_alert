@@ -2,7 +2,7 @@ import {useState, useEffect} from 'react';
 import {Platform, PermissionsAndroid, Alert} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import BackgroundTimer from 'react-native-background-timer';
-import {LatLng} from '../types';
+import { LatLng } from 'react-native-leaflet-view';
 import {
   ERROR_GET_REAL_TIME_LOCATION,
   USER_LOCATION_DENIED,
@@ -66,18 +66,14 @@ const useLocation = () => {
     if (!locationPermissionGranted) {
       return;
     }
-
-    // Get location immediately when permission is granted
     getCurrentLocation();
 
-    // Set up background timer to fetch location every 5 seconds (5000 ms)
     const intervalId = BackgroundTimer.setInterval(() => {
       console.log('Fetching location...');
       getCurrentLocation();
     }, 5000);
 
     return () => {
-      // Clean up the interval when component unmounts
       BackgroundTimer.clearInterval(intervalId);
     };
   }, [locationPermissionGranted]);
