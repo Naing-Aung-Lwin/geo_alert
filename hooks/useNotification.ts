@@ -1,5 +1,9 @@
+import notifee, {
+  AndroidColor,
+  AuthorizationStatus,
+} from '@notifee/react-native';
+
 import {useCallback} from 'react';
-import notifee, {AuthorizationStatus} from '@notifee/react-native';
 
 const useNotification = () => {
   /**
@@ -37,7 +41,11 @@ const useNotification = () => {
         id: channelId,
         name: channelName,
         importance: 4,
-        sound: 'none',
+        vibration: true,
+        vibrationPattern: [300, 500],
+        lights: true,
+        lightColor: AndroidColor.RED,
+        sound: 'universfield',
       });
     },
     [],
@@ -83,7 +91,12 @@ const useNotification = () => {
             id: 'default',
           },
           actions: androidActions,
-          sound: 'none',
+          vibrationPattern: [300, 500],
+          lights: [AndroidColor.RED, 300, 600],
+          showChronometer: true,
+          chronometerDirection: 'down',
+          timestamp: Date.now() + 300000,
+          sound: 'universfield',
         },
       });
     },
